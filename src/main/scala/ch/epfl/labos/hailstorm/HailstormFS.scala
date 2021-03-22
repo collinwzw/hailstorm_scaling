@@ -24,7 +24,6 @@
 package ch.epfl.labos.hailstorm
 
 import java.nio.file.Paths
-
 import akka.pattern.ask
 import akka.util.Timeout
 import ch.epfl.labos.hailstorm.backend._
@@ -57,7 +56,7 @@ class CliArguments(arguments: Seq[String]) extends ScallopConf(arguments) {
   val fileMappingDb = opt[String](short = 'f', default = Some("./roxxfs.sqlite"), descr = "Where to put the persistent file mapping database")
   val clearOnInit = opt[Boolean](short = 'i', default = Some(true), descr = "Drop persistent file mapping at startup")
   val fuseOpts = opt[List[String]](short = 'o', default = Some(Nil), descr = "FUSE options")
-  val verbose = opt[Boolean](short = 'v', default = Some(false), descr = "Enable debug logging")
+  val verbose = opt[Boolean](short = 'v', default = Some(true), descr = "Enable debug logging")
 
   override def onError(e: Throwable) = e match {
     case exceptions.ScallopException(message) =>
@@ -72,6 +71,7 @@ class CliArguments(arguments: Seq[String]) extends ScallopConf(arguments) {
 }
 
 object HailstormFS {
+  var hfs: HailstormFS = null
   def main(args: Array[String]): Unit = {
     SysOutOverSLF4J.sendSystemOutAndErrToSLF4J(LogLevel.DEBUG, LogLevel.DEBUG)
     val log = org.slf4j.LoggerFactory.getLogger(classOf[HailstormFS])
@@ -91,7 +91,7 @@ object HailstormFS {
         |""".stripMargin)
 
     log.info("Initializing Hailstorm...")
-    val hfs = new HailstormFS(cliArguments)
+    hfs = new HailstormFS(cliArguments)
 
     if (cliArguments.blacklist.isSupplied) {
       log.info(s"Blacklist is ON. Files matching '${cliArguments.blacklist().mkString(", ")}' will go to ${cliArguments.blacklistPath()}")
@@ -100,11 +100,21 @@ object HailstormFS {
     Config.ModeConfig.mode match {
       case Config.ModeConfig.Dev =>
         // Testing: starting 3 backend nodes and 1 frontend node
-        for (i <- 0 until 3) {
+        for (i <- 0 until 2) {
+          //arg(0) contains the "-m"
+          //arg(1) contains the mounting point directory
+          //arg(2) contains the "-v"
+
           val newArgs = (args.toSeq ++ Seq("--me", s"$i")).toArray // need to force --me here
+          //newArgs(3) contains the "--me"
+          //newArgs(4) contains the "0,1,2" depend on i which tells the hailstorm which index from port list we should use.
           HailstormBackend.start(new CliArguments(newArgs))
         }
+
         HailstormFrontendFuse.start(cliArguments)
+        HailstormBackend.startNewNode("127.0.0.1", 2555)
+        HailstormFrontendFuse.startWithNewNode("127.0.0.1", 2555)
+
       case Config.ModeConfig.Prod =>
         // Prod: starting 1 backend node and 1 frontend node
         HailstormBackend.start(cliArguments)

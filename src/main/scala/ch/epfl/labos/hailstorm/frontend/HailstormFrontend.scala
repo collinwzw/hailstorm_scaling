@@ -26,6 +26,7 @@ package ch.epfl.labos.hailstorm.frontend
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
+import ch.epfl.labos.hailstorm.backend.HailstormBackend
 import ch.epfl.labos.hailstorm.common._
 import ch.epfl.labos.hailstorm.frontend.HailstormFileHandle.PathChanged
 import ch.epfl.labos.hailstorm.util._
@@ -39,7 +40,6 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 import scala.util.Success
-
 import java.sql.{Array => _, _}
 
 object HailstormFrontendFuse {
@@ -47,6 +47,25 @@ object HailstormFrontendFuse {
   var system: ActorSystem = null
   var storageManager: ActorRef = null
   var agent: ActorRef = null
+
+  var frontendHostname: String = null
+  var frontendPort: Int = 0
+
+  def startWithNewNode(hostname: String, port: Int): Unit = {
+    //hostname and port are for new backend node
+    Config.HailstormConfig.BackendConfig.NodesConfig.connectBackend(system)
+
+    system.log.debug(HailstormStorageManager.name)
+
+    system.registerOnTermination {
+      System.exit(0)
+    }
+    system.log.debug("Connect new backend node:" + hostname + ":" + port.toString)
+
+//    here do:
+//    hash function
+//    operate on chunks
+  }
 
   def start(cliArguments: CliArguments): Unit = {
     var config =
@@ -61,23 +80,37 @@ object HailstormFrontendFuse {
           .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.FrontendConfig.NodesConfig.nodes(cliArguments.me()).port))
           .withValue("akka.remote.artery.bind.hostname", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.FrontendConfig.NodesConfig.nodes(cliArguments.me()).hostname))
           .withValue("akka.remote.artery.bind.port", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.FrontendConfig.NodesConfig.nodes(cliArguments.me()).port))
-      } else {
+        } else {
         Config.HailstormConfig.FrontendConfig.frontendConfig
           .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.FrontendConfig.NodesConfig.localNode.hostname))
           .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.FrontendConfig.NodesConfig.localNode.port))
           .withValue("akka.remote.artery.canonical.hostname", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.FrontendConfig.NodesConfig.localNode.hostname))
           .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.FrontendConfig.NodesConfig.localNode.port))
-      }
+        }
+    //get access to frontend hostname and port without cli arguments
+    if (cliArguments.me.isSupplied) {
+      frontendHostname = Config.HailstormConfig.FrontendConfig.NodesConfig.nodes(cliArguments.me()).hostname
+      frontendPort = Config.HailstormConfig.FrontendConfig.NodesConfig.nodes(cliArguments.me()).port
+    } else {
+      frontendHostname = Config.HailstormConfig.FrontendConfig.NodesConfig.localNode.hostname
+      frontendPort = Config.HailstormConfig.FrontendConfig.NodesConfig.localNode.port
+    }
 
     if (cliArguments.verbose()) {
       config = config.withValue("akka.loglevel", ConfigValueFactory.fromAnyRef("DEBUG"))
     }
 
     system = ActorSystem("HailstormFrontend", config)
+    //system.toString() = akka://HailstormFrontend
 
     Config.HailstormConfig.BackendConfig.NodesConfig.connectBackend(system)
-
+    system.log.debug("Ziwen")
+    system.log.debug(HailstormStorageManager.name)
+    //val fileMappingDb = opt[String](short = 'f', default = Some("./roxxfs.sqlite"), descr = "Where to put the persistent file mapping database")
+    //val clearOnInit = opt[Boolean](short = 'i', default = Some(true), descr = "Drop persistent file mapping at startup")
+    // HailstormStorageManager.name = roxxfs
     storageManager = system.actorOf(HailstormStorageManager.props(cliArguments.fileMappingDb(), cliArguments.clearOnInit()), HailstormStorageManager.name)
+    // storageManager.toString() = Actor[akka://HailstormFrontend/user/roxxfs#1315895719]
 
     if (cliArguments.offloading()) {
       agent = system.actorOf(HailstormAgent.props(cliArguments.mountpoint()), HailstormAgent.name)
@@ -317,6 +350,22 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
       log.debug(s"CREAT $path")
       ft create (path, uuid)
       sender ! FileCreated
+    case msg: String =>
+//      example:
+//        add,127.0.0.1,2556
+//        remove,127.0.0.1,2551
+      log.debug(msg.toString())
+      val msgArray = msg.split(",", 3)
+      val hostname = msgArray(1)
+      val port = msgArray(2).toInt
+      if (msgArray(0) == "add") {
+        HailstormBackend.startNewNode(hostname, port)
+        HailstormFrontendFuse.startWithNewNode(hostname, port)
+      }
+      else {
+//        todo
+//        remove node here
+      }
   }
 }
 
@@ -395,6 +444,7 @@ class HailstormFileHandle(id: String, var path: String) extends Actor with Actor
     client = context.actorOf(HailstormBagClient.props(Bag(id), path), HailstormBagClient.name(Bag(id)))
 
     log.debug(s"Started file handle for $path")
+    log.debug("test")
   }
 
   override def postStop(): Unit = {
@@ -528,6 +578,7 @@ class HailstormFileHandle(id: String, var path: String) extends Actor with Actor
       sender ! FlushAck*/
 
     case Flush =>
+      // flush the file: clear interner buffer of the file
       log.debug(s"FLUSH $path")
 
       val dirty = cache.keysIterator filter (o => cacheState.get(o).contains(Dirty))

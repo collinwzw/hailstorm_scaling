@@ -1,0 +1,9 @@
+sudo sbt
+run -m /home/ubuntu/HS -v
+
+ls 255*/*
+rm 255*/*
+
+dd if=/dev/zero of=file1.txt count=2048 bs=204800
+
+python3 generate_text.py > ./HS/load.txt

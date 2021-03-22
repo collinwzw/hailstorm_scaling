@@ -23,6 +23,8 @@
  */
 package ch.epfl.labos.hailstorm
 
+import org.rogach.scallop._ //remove if log of config is not needed. (Ziwen)
+import uk.org.lidalia.sysoutslf4j.context._ //remove if log of config is not needed. (Ziwen)
 import akka.actor.{ActorSelection, ActorSystem}
 import ch.epfl.labos.hailstorm.util._
 
@@ -59,6 +61,8 @@ trait ConfigUtils {
 }
 
 object Config extends ConfigUtils {
+  SysOutOverSLF4J.sendSystemOutAndErrToSLF4J(LogLevel.DEBUG, LogLevel.DEBUG)  //remove if log of config is not needed. (Ziwen)
+  val log = org.slf4j.LoggerFactory.getLogger(classOf[HailstormFS])   //remove if log of config is not needed. (Ziwen)
 
   import com.typesafe.config.ConfigFactory
 
@@ -134,11 +138,12 @@ object Config extends ConfigUtils {
       }
 
       object NodesConfig {
-        val nodes = backendConfig.getList("nodes").unwrapped.toArray.toList.map(_.toString) map {
+        var nodes = backendConfig.getList("nodes").unwrapped.toArray.toList.map(_.toString) map {
           case NodeAddressPattern(hostname, port) => NodeAddress(hostname, port.toInt)
         }
-
-        val machines = nodes.size
+        // nodes = SimpleConfigList(["127.0.0.1:2551","127.0.0.1:2552","127.0.0.1:2553"])
+        var machines = nodes.size
+        // machine = number of nodes
 
         val localNode = nodes(me)
 
@@ -148,6 +153,11 @@ object Config extends ConfigUtils {
         import scala.concurrent.duration._
 
         var backendRefs: Seq[ActorRef] = Seq.empty
+
+        def addNewBackend(hostname: String, port: Int): Unit = {
+          nodes = nodes :+ NodeAddress(hostname, port)
+          machines = nodes.size
+        }
 
         def connectBackend(implicit system: ActorSystem): Unit = {
           import system.dispatcher

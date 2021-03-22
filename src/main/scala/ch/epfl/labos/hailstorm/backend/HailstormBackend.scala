@@ -68,6 +68,35 @@ class HailstormBackendActor(subDirectory: Option[String]) extends Actor with Act
 }
 
 object HailstormBackend {
+  def startNewNode(hostname: String, port: Int): Unit = {
+    var config = {
+        Config.HailstormConfig.BackendConfig.backendConfig
+          .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(hostname))
+          .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(port))
+          .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(hostname))
+          .withValue("akka.remote.netty.tcp.bind-port", ConfigValueFactory.fromAnyRef(port))
+          .withValue("akka.remote.artery.canonical.hostname", ConfigValueFactory.fromAnyRef(hostname))
+          .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(port))
+          .withValue("akka.remote.artery.bind.hostname", ConfigValueFactory.fromAnyRef(hostname))
+          .withValue("akka.remote.artery.bind.port", ConfigValueFactory.fromAnyRef(port))
+      }
+
+    val system = ActorSystem("HailstormBackend", config)
+
+    ch.epfl.labos.hailstorm.frontend.Statistics.init(system.dispatchers.lookup("hailstorm.backend.statistics-dispatcher"))
+
+    system.log.debug(Config.HailstormConfig.BackendConfig.NodesConfig.nodes.size.toString())
+    Config.ModeConfig.mode match {
+      case Config.ModeConfig.Dev =>
+        system.actorOf(HailstormBackendActor.props(Some(port + "")), HailstormBackendActor.name)
+      case Config.ModeConfig.Prod =>
+        system.actorOf(HailstormBackendActor.props(None), HailstormBackendActor.name)
+    }
+    system.log.debug("New node:" + hostname + ":" + port.toString)
+    system.log.debug("Allocating buffers...")
+    Config.HailstormConfig.BackendConfig.NodesConfig.addNewBackend(hostname, port)
+    BackendChunkPool.init()
+  }
 
   def start(cliArguments: CliArguments): Unit = {
     var config =
