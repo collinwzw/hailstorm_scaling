@@ -112,8 +112,8 @@ object HailstormFS {
         }
 
         HailstormFrontendFuse.start(cliArguments)
-        HailstormBackend.startNewNode("127.0.0.1", 2555)
-        HailstormFrontendFuse.startWithNewNode("127.0.0.1", 2555)
+//        HailstormBackend.startNewNode("127.0.0.1", 2555)
+//        HailstormFrontendFuse.startWithNewNode("127.0.0.1", 2555)
 
       case Config.ModeConfig.Prod =>
         // Prod: starting 1 backend node and 1 frontend node
