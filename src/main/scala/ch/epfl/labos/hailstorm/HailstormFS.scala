@@ -100,7 +100,7 @@ object HailstormFS {
     Config.ModeConfig.mode match {
       case Config.ModeConfig.Dev =>
         // Testing: starting 3 backend nodes and 1 frontend node
-        for (i <- 0 until 2) {
+        for (i <- 0 until 5) {
           //arg(0) contains the "-m"
           //arg(1) contains the mounting point directory
           //arg(2) contains the "-v"
@@ -110,7 +110,7 @@ object HailstormFS {
           //newArgs(4) contains the "0,1,2" depend on i which tells the hailstorm which index from port list we should use.
           HailstormBackend.start(new CliArguments(newArgs))
         }
-
+        //Thread.sleep(10000)
         HailstormFrontendFuse.start(cliArguments)
 //        HailstormBackend.startNewNode("127.0.0.1", 2555)
 //        HailstormFrontendFuse.startWithNewNode("127.0.0.1", 2555)
@@ -414,6 +414,9 @@ class HailstormFS(cliArguments: CliArguments) extends FuseStubFS {
       children += path
     }
 
+    def getChildren(): Unit ={
+      return children
+    }
   }
 
   class HailstormFile(var name: String, val parent: Option[HailstormDirectory]) extends HailstormPath {

@@ -159,6 +159,11 @@ object Config extends ConfigUtils {
           machines = nodes.size
         }
 
+        def removeBackend(hostname: String, port: Int): Unit = {
+          nodes = nodes.filter(nodeAddress => nodeAddress.hostname != hostname && nodeAddress.port != port)
+          machines = nodes.size
+        }
+
         def connectBackend(implicit system: ActorSystem): Unit = {
           import system.dispatcher
           backendRefs = Await.result(Future.sequence(nodes.map(na => system.actorSelection(s"$protocol://HailstormBackend@${na.hostname}:${na.port}/user/master").resolveOne(30 seconds))), 30 seconds)

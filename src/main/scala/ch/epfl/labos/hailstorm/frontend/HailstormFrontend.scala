@@ -30,7 +30,7 @@ import ch.epfl.labos.hailstorm.backend.HailstormBackend
 import ch.epfl.labos.hailstorm.common._
 import ch.epfl.labos.hailstorm.frontend.HailstormFileHandle.PathChanged
 import ch.epfl.labos.hailstorm.util._
-import ch.epfl.labos.hailstorm.{CliArguments, Config}
+import ch.epfl.labos.hailstorm.{CliArguments, Config, HailstormFS}
 import com.typesafe.config._
 import jnr.ffi.Pointer
 import jnr.ffi.types.{off_t, size_t}
@@ -50,6 +50,12 @@ object HailstormFrontendFuse {
 
   var frontendHostname: String = null
   var frontendPort: Int = 0
+
+  def removeNode(hostname: String, port: Int): Unit = {
+    Config.HailstormConfig.BackendConfig.NodesConfig.removeBackend(hostname, port)
+    Config.HailstormConfig.BackendConfig.NodesConfig.connectBackend(system)
+    system.log.debug("Remove backend node:" + hostname + ":" + port.toString)
+  }
 
   def startWithNewNode(hostname: String, port: Int): Unit = {
     //hostname and port are for new backend node
@@ -361,10 +367,30 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
       if (msgArray(0) == "add") {
         HailstormBackend.startNewNode(hostname, port)
         HailstormFrontendFuse.startWithNewNode(hostname, port)
+        val path = ""
+        val ls = ft.paths.filter(_.startsWith(path)).map(_.substring(path.length)).filterNot(_.startsWith(".")).map(_.takeWhile(_ != '/'))
+        var hfs = HailstormFS.hfs
+        for (file <- ls){
+          val metadata = ft metadata file
+          log.debug(file.toString())
+          log.debug(metadata.toString())
+//          hfs.getPath(file) match {
+//            case Some(f) =>
+//              f.fileHandle.ref ! Delete
+//              log.debug(f.toString())
+//          }
+
+          //ft.create( file.toString(), uuid)
+
+          log.debug(hfs.toString())
+        }
+
       }
       else {
 //        todo
 //        remove node here
+        HailstormBackend.stopNode(hostname, port)
+        HailstormFrontendFuse.removeNode(hostname, port)
       }
   }
 }
