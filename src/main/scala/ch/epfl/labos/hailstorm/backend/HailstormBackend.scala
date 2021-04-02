@@ -68,10 +68,6 @@ class HailstormBackendActor(subDirectory: Option[String]) extends Actor with Act
 }
 
 object HailstormBackend {
-  def stopNode(hostname: String, port: Int): Unit = {
-
-  }
-
   def startNewNode(hostname: String, port: Int): Unit = {
     var config = {
         Config.HailstormConfig.BackendConfig.backendConfig
