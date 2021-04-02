@@ -68,6 +68,17 @@ class HailstormBackendActor(subDirectory: Option[String]) extends Actor with Act
 }
 
 object HailstormBackend {
+  case class System(system: ActorSystem, port: Int)
+  var systems: List[System] = Nil
+  def stop(port: Int): Unit = {
+    systems.filter(system => if (system.port == port) {
+      system.system.terminate()
+      false
+    } else {
+      true
+    })
+  }
+
   def startNewNode(hostname: String, port: Int): Unit = {
     var config = {
         Config.HailstormConfig.BackendConfig.backendConfig
@@ -82,7 +93,7 @@ object HailstormBackend {
       }
 
     val system = ActorSystem("HailstormBackend", config)
-
+    systems :+ System(system, port)
     ch.epfl.labos.hailstorm.frontend.Statistics.init(system.dispatchers.lookup("hailstorm.backend.statistics-dispatcher"))
 
     system.log.debug(Config.HailstormConfig.BackendConfig.NodesConfig.nodes.size.toString())
@@ -118,13 +129,11 @@ object HailstormBackend {
           .withValue("akka.remote.artery.canonical.hostname", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.BackendConfig.NodesConfig.localNode.hostname))
           .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(Config.HailstormConfig.BackendConfig.NodesConfig.localNode.port))
       }
-
     if (cliArguments.verbose()) {
       config = config.withValue("akka.loglevel", ConfigValueFactory.fromAnyRef("DEBUG"))
     }
 
     val system = ActorSystem("HailstormBackend", config)
-
     ch.epfl.labos.hailstorm.frontend.Statistics.init(system.dispatchers.lookup("hailstorm.backend.statistics-dispatcher"))
 
     val port =
@@ -133,6 +142,7 @@ object HailstormBackend {
       } else {
         Config.HailstormConfig.BackendConfig.NodesConfig.localNode.port
       }
+    systems :+ System(system, port)
 
     Config.ModeConfig.mode match {
       case Config.ModeConfig.Dev =>
