@@ -52,7 +52,7 @@ object HailstormFrontendFuse {
   var frontendPort: Int = 0
 
   def removeNode(hostname: String, port: Int): Unit = {
-    Config.HailstormConfig.BackendConfig.NodesConfig.removeAndReconnectBackend(system, hostname, port)
+    Config.HailstormConfig.BackendConfig.NodesConfig.replaceAndReconnectBackend(system, hostname, port)
     system.log.debug("Remove backend node:" + hostname + ":" + port.toString)
   }
 
@@ -382,7 +382,8 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
 
       }
       else {
-        HailstormFrontendFuse.removeNode(hostname, port)
+        HailstormFrontendFuse.removeNode(hostname, port) //hostname is new added node's hostname
+        HailstormBackend.stop(port)
       }
   }
 }
