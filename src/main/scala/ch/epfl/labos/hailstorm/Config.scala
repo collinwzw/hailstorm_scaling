@@ -100,6 +100,7 @@ object Config extends ConfigUtils {
     case class NodeAddress(hostname: String, port: Int)
 
     object BackendConfig {
+      val originalConfig = ConfigFactory.parseResources("original_application")
       val backendConfig = root.getConfig("backend")
       val chunkPoolSize = backendConfig.getBytes("chunk-pool-size").toLong
       private val NodeAddressPattern = """([^:]+):(\d+)""".r
@@ -140,6 +141,14 @@ object Config extends ConfigUtils {
       object NodesConfig {
         var nodes = backendConfig.getList("nodes").unwrapped.toArray.toList.map(_.toString) map {
           case NodeAddressPattern(hostname, port) => NodeAddress(hostname, port.toInt)
+        }
+
+        val originalNodes: List[NodeAddress] = {
+          if (originalConfig.hasPath("hailstorm")) {
+            ConfigFactory.load(originalConfig).getConfig("hailstorm").getConfig("backend").getList("nodes").unwrapped.toArray.toList.map(_.toString) map {
+              case NodeAddressPattern(hostname, port) => NodeAddress(hostname, port.toInt)
+            }
+          } else { Nil }
         }
         // nodes = SimpleConfigList(["127.0.0.1:2551","127.0.0.1:2552","127.0.0.1:2553"])
         var machines = nodes.size

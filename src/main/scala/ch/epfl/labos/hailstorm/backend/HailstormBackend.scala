@@ -71,7 +71,8 @@ object HailstormBackend {
   case class System(system: ActorSystem, port: Int)
   var systems: List[System] = Nil
   def stop(port: Int): Unit = {
-    systems.filter(system => if (system.port == port) {
+    systems = systems.filter(system => if (system.port == port) {
+      system.system.log.debug("Terminating port:" + port.toString)
       system.system.terminate()
       false
     } else {
