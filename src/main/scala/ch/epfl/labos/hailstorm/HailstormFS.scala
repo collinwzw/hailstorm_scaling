@@ -23,6 +23,7 @@
  */
 package ch.epfl.labos.hailstorm
 
+import java.net._
 import java.nio.file.Paths
 import akka.pattern.ask
 import akka.util.Timeout
@@ -57,6 +58,7 @@ class CliArguments(arguments: Seq[String]) extends ScallopConf(arguments) {
   val clearOnInit = opt[Boolean](short = 'i', default = Some(true), descr = "Drop persistent file mapping at startup")
   val fuseOpts = opt[List[String]](short = 'o', default = Some(Nil), descr = "FUSE options")
   val verbose = opt[Boolean](short = 'v', default = Some(true), descr = "Enable debug logging")
+  val portlist = opt[String](short = 'a', default = Some("2552"), descr = "which port to start")
 
   override def onError(e: Throwable) = e match {
     case exceptions.ScallopException(message) =>
@@ -122,7 +124,16 @@ object HailstormFS {
         HailstormFrontendFuse.start(cliArguments)
 
       //add by Qiwei
-      case Config.ModeConfig.scl =>
+      case Config.ModeConfig.Scl =>
+        val localhost: InetAddress = InetAddress.getLocalHost
+        val localIpAddress: String = localhost.getHostAddress
+        val port_list_string: String = cliArguments.portlist()
+        val port_list: Array[String]  = port_list_string.split(',')
+        for (x: String <- port_list){
+          HailstormBackend.startNewNode(localIpAddress, x.toInt);
+        }
+        HailstormFrontendFuse.start(cliArguments)
+
     //    if (cLiArgument.nodeIP.isSupplied){
     //       Config.HailstormConfig.BackendConfig.NodesConfig.nodes = readConfig(nodeIP) //aws read remote node config
     //       consistentHashing.add(Config.HailstormConfig.BackendConfig.NodesConfig.nodes.localIpAddress)

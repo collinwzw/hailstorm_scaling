@@ -28,6 +28,7 @@ do
   if [ $found = true ]
   then
     ip_port_array+="$line"
+    #echo $line
     ((count++))
     fi
   if [ "$line" = "hailstorm.backend.nodes = [" ]
