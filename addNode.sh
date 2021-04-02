@@ -12,7 +12,7 @@ original_applicationConfPath="/home/ubuntu/Desktop/hailstorm/src/main/resources/
 echo "IP: $ip";
 # copy the application.conf file from the IP
 scp -i /home/ubuntu/Desktop/ECE1724Project.pem ubuntu@$ip:$applicationConfPath $applicationConfPath
-scp -i /home/ubuntu/Desktop/ECE1724Project.pem ubuntu@$ip:$applicationConfPath original_applicationConfPath
+scp -i /home/ubuntu/Desktop/ECE1724Project.pem ubuntu@$ip:$applicationConfPath $original_applicationConfPath
 
 found=False
 count=0
@@ -28,6 +28,7 @@ do
   if [ $found = true ]
   then
     ip_port_array+="$line"
+    #echo $line
     ((count++))
     fi
   if [ "$line" = "hailstorm.backend.nodes = [" ]
@@ -60,8 +61,9 @@ for ip_port in $ip_port_array; do
     fi
 done
 
+#change the frontend ip in application conf
 s=":3553"
-sed -i -e 's/'"*:3553"'/'"$local_ip$s"'/' $applicationConfPath
+sed -i -e 's/'"$ip$s"'/'"$local_ip$s"'/' $applicationConfPath
 
 #sbt
 

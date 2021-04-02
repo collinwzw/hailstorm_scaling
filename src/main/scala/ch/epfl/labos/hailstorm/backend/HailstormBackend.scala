@@ -101,6 +101,8 @@ object HailstormBackend {
     Config.ModeConfig.mode match {
       case Config.ModeConfig.Dev =>
         system.actorOf(HailstormBackendActor.props(Some(port + "")), HailstormBackendActor.name)
+      case Config.ModeConfig.Scl =>
+        system.actorOf(HailstormBackendActor.props(Some(port + "")), HailstormBackendActor.name)
       case Config.ModeConfig.Prod =>
         system.actorOf(HailstormBackendActor.props(None), HailstormBackendActor.name)
     }

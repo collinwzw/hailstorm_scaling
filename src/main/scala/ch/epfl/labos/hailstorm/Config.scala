@@ -74,6 +74,7 @@ object Config extends ConfigUtils {
 
     val mode = root.getStringOpt("mode").map(_.trim.toLowerCase) match {
       case Some("dev") => Dev
+      case Some("scl") => Scl
       case _ => Prod
     }
 
@@ -82,6 +83,8 @@ object Config extends ConfigUtils {
     case object Dev extends Mode
 
     case object Prod extends Mode
+
+    case object Scl extends Mode
 
   }
 
