@@ -382,8 +382,8 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
 
       }
       else {
-        HailstormFrontendFuse.removeNode(hostname, port) //hostname is new added node's hostname
         HailstormBackend.stop(port)
+        HailstormFrontendFuse.removeNode(hostname, port) //hostname is new added node's hostname
       }
   }
 }
