@@ -94,7 +94,7 @@ object HailstormBackend {
       }
 
     val system = ActorSystem("HailstormBackend", config)
-    systems :+ System(system, port)
+    systems = systems :+ System(system, port)
     ch.epfl.labos.hailstorm.frontend.Statistics.init(system.dispatchers.lookup("hailstorm.backend.statistics-dispatcher"))
 
     system.log.debug(Config.HailstormConfig.BackendConfig.NodesConfig.nodes.size.toString())
@@ -145,7 +145,7 @@ object HailstormBackend {
       } else {
         Config.HailstormConfig.BackendConfig.NodesConfig.localNode.port
       }
-    systems :+ System(system, port)
+    systems = systems :+ System(system, port)
 
     Config.ModeConfig.mode match {
       case Config.ModeConfig.Dev =>
