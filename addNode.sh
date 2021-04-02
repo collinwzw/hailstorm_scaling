@@ -49,7 +49,7 @@ semi=":"
 for ip_port in $ip_port_array; do
   a="${ip_port#*:}";
   port="${a%\"*}"
-  if [ $port = "2552" ]
+  if [ $port = "2501" ]
   then
     replace_string="$local_ip$semi$port"
     ip_port="${ip_port#*\"}";

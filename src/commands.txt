@@ -9,3 +9,5 @@ dd if=/dev/zero of=file1.txt count=2048 bs=204800
 python3 generate_text.py > ./HS/load.txt
 
 scp -i /home/ubuntu/Desktop/ECE1724Project.pem -r ubuntu@172.31.36.144:/home/ubuntu/Desktop/hailstorm/data/ /home/ubuntu/Desktop/hailstorm/
+
+bash addNode.sh -i 172.31.87.94
