@@ -101,7 +101,7 @@ object HailstormFS {
     Config.ModeConfig.mode match {
       case Config.ModeConfig.Dev =>
         // Testing: starting 3 backend nodes and 1 frontend node
-        for (i <- 0 until 2) {
+        for (i <- 0 until 4) {
           //arg(0) contains the "-m"
           //arg(1) contains the mounting point directory
           //arg(2) contains the "-v"
@@ -131,6 +131,7 @@ object HailstormFS {
         for (x: String <- port_list) {
           HailstormBackend.startNewNode(localIpAddress, x.toInt);
         }
+        Thread.sleep(5000)
         HailstormFrontendFuse.start(cliArguments)
 
       //    if (cLiArgument.nodeIP.isSupplied){
