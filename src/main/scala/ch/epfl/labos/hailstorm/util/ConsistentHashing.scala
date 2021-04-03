@@ -6,9 +6,6 @@ import scala.+:
 import scala.collection.mutable.ArrayBuffer
 
 object ConsistentHashing {
-  def main(args: Array[String]): Unit = {
-
-  }
 
 }
 
