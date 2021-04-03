@@ -103,7 +103,7 @@ object Config extends ConfigUtils {
     case class NodeAddress(hostname: String, port: Int)
 
     object BackendConfig {
-      val originalConfig = ConfigFactory.parseResources("original_application")
+      val originalConfig = ConfigFactory.parseResources("original_application.conf")
       val backendConfig = root.getConfig("backend")
       val chunkPoolSize = backendConfig.getBytes("chunk-pool-size").toLong
       private val NodeAddressPattern = """([^:]+):(\d+)""".r

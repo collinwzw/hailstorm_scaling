@@ -79,7 +79,6 @@ object HailstormFS {
     val log = org.slf4j.LoggerFactory.getLogger(classOf[HailstormFS])
 
     val cliArguments = new CliArguments(args)
-
     log.info(
       """
         |______  __      ___________      _____                        _________________
@@ -114,8 +113,8 @@ object HailstormFS {
         }
         //Thread.sleep(10000)
         HailstormFrontendFuse.start(cliArguments)
-//        HailstormBackend.startNewNode("127.0.0.1", 2555)
-//        HailstormFrontendFuse.startWithNewNode("127.0.0.1", 2555)
+      //        HailstormBackend.startNewNode("127.0.0.1", 2555)
+      //        HailstormFrontendFuse.startWithNewNode("127.0.0.1", 2555)
 
       case Config.ModeConfig.Prod =>
         // Prod: starting 1 backend node and 1 frontend node
@@ -128,27 +127,27 @@ object HailstormFS {
         val localhost: InetAddress = InetAddress.getLocalHost
         val localIpAddress: String = localhost.getHostAddress
         val port_list_string: String = cliArguments.portlist()
-        val port_list: Array[String]  = port_list_string.split(',')
-        for (x: String <- port_list){
+        val port_list: Array[String] = port_list_string.split(',')
+        for (x: String <- port_list) {
           HailstormBackend.startNewNode(localIpAddress, x.toInt);
         }
         HailstormFrontendFuse.start(cliArguments)
 
-    //    if (cLiArgument.nodeIP.isSupplied){
-    //       Config.HailstormConfig.BackendConfig.NodesConfig.nodes = readConfig(nodeIP) //aws read remote node config
-    //       consistentHashing.add(Config.HailstormConfig.BackendConfig.NodesConfig.nodes.localIpAddress)
-    //      val portlist = consistentHashing.mynode(Config.HailstormConfig.FrontendConfig.NodesConfig.nodes.localIpAddress)//[2551,2552,2553]
-    //      for (x <- portlist){
-    //        HailstormBackend.startNewNode(localIPAddress + ":" + x)
-    //      }
-    //      Thread.sleep(5000) // sleep 5 seconds to make sure the backend is started
-    //      HailstormFrontendFuse.start(cliArguments)
-    //    }
-    //    else{
-    //      HailstormBackend.start(cliArguments)
-    //      Thread.sleep(5000) // sleep 5 seconds to make sure the backend is started
-    //      HailstormFrontendFuse.start(cliArguments)
-    //    }
+      //    if (cLiArgument.nodeIP.isSupplied){
+      //       Config.HailstormConfig.BackendConfig.NodesConfig.nodes = readConfig(nodeIP) //aws read remote node config
+      //       consistentHashing.add(Config.HailstormConfig.BackendConfig.NodesConfig.nodes.localIpAddress)
+      //      val portlist = consistentHashing.mynode(Config.HailstormConfig.FrontendConfig.NodesConfig.nodes.localIpAddress)//[2551,2552,2553]
+      //      for (x <- portlist){
+      //        HailstormBackend.startNewNode(localIPAddress + ":" + x)
+      //      }
+      //      Thread.sleep(5000) // sleep 5 seconds to make sure the backend is started
+      //      HailstormFrontendFuse.start(cliArguments)
+      //    }
+      //    else{
+      //      HailstormBackend.start(cliArguments)
+      //      Thread.sleep(5000) // sleep 5 seconds to make sure the backend is started
+      //      HailstormFrontendFuse.start(cliArguments)
+      //    }
       //start scale mode
     }
 
@@ -170,6 +169,13 @@ object HailstormFS {
       log.info(s"Mounting HailstormFS to path $path with options $fuseOpts")
       hfs.mount(Paths.get(path), true, cliArguments.verbose(), fuseOpts.toArray)
     } finally hfs.umount()
+
+//    for (originalNode <- Config.HailstormConfig.BackendConfig.NodesConfig.originalNodes) {
+//      old hostname: originalNode.hostname
+//      new hostname: ipconfig?
+//      1. send akka message to an old machine with ip: originalNode.hostname
+//      2. call remove "remove,new hostname,port"
+//    }
   }
 }
 
