@@ -77,7 +77,6 @@ object HailstormFS {
   def main(args: Array[String]): Unit = {
     SysOutOverSLF4J.sendSystemOutAndErrToSLF4J(LogLevel.DEBUG, LogLevel.DEBUG)
     val log = org.slf4j.LoggerFactory.getLogger(classOf[HailstormFS])
-
     val cliArguments = new CliArguments(args)
     log.info(
       """
@@ -170,13 +169,6 @@ object HailstormFS {
       log.info(s"Mounting HailstormFS to path $path with options $fuseOpts")
       hfs.mount(Paths.get(path), true, cliArguments.verbose(), fuseOpts.toArray)
     } finally hfs.umount()
-
-//    for (originalNode <- Config.HailstormConfig.BackendConfig.NodesConfig.originalNodes) {
-//      old hostname: originalNode.hostname
-//      new hostname: ipconfig?
-//      1. send akka message to an old machine with ip: originalNode.hostname
-//      2. call remove "remove,new hostname,port"
-//    }
   }
 }
 
