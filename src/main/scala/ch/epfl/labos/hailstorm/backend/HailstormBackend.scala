@@ -30,9 +30,10 @@ import better.files.File
 import ch.epfl.labos.hailstorm._
 import ch.epfl.labos.hailstorm.common._
 import com.typesafe.config.ConfigValueFactory
+
+import java.net.InetAddress
 import scala.util.Failure
 import scala.util.Success
-
 import scala.collection.mutable.{Map => MMap}
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -159,19 +160,22 @@ object HailstormBackend {
       case Config.ModeConfig.Prod =>
         system.actorOf(HailstormBackendActor.props(None), HailstormBackendActor.name)
     }
-    system.actorSelection("akka.tcp://HailstormFrontend@172.31.87.94:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
-      case Success(ref: ActorRef) => {
-        system.log.debug(f"Located HailstormFrontend actor: $ref")
-        //ref ! "remove,172.31.87.94,2501"
-        ref ! "remove,172.31.36.144,2502"
-        //ref ! "remove,172.31.36.144,2503"
-        //ref ! HailstormStorageManager.AddNode("127.0.0.1", 5000)
-      }
-      case Failure(t) => {
-        system.log.debug(f"Failed to locate the actor. Reason: $t")
-        system.terminate()
-      }
-    })
+    for (originalNode <- Config.HailstormConfig.BackendConfig.NodesConfig.originalNodes) {
+      system.actorSelection(s"akka.tcp://HailstormFrontend@${originalNode.hostname}:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
+        case Success(ref: ActorRef) => {
+          system.log.debug(f"Located HailstormFrontend actor: $ref")
+            val newIp = InetAddress.getLocalHost.getHostAddress
+            for (newPort <- Config.HailstormConfig.BackendConfig.NodesConfig.localPorts) {
+              ref ! s"remove,${newIp},${newPort}"
+            }
+              //ref ! HailstormStorageManager.AddNode("127.0.0.1", 5000)
+            }
+            case Failure(t) => {
+              system.log.debug(f"Failed to locate the actor. Reason: $t")
+              system.terminate()
+            }
+          })
+        }
     system.log.debug("Allocating buffers...")
     BackendChunkPool.init()
   }
