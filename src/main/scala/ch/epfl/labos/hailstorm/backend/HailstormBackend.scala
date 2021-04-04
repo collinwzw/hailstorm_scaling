@@ -168,14 +168,13 @@ object HailstormBackend {
             for (newPort <- Config.HailstormConfig.BackendConfig.NodesConfig.localPorts) {
               ref ! s"remove,${newIp},${newPort}"
             }
-              //ref ! HailstormStorageManager.AddNode("127.0.0.1", 5000)
-            }
+        }
             case Failure(t) => {
               system.log.debug(f"Failed to locate the actor. Reason: $t")
               system.terminate()
             }
-          })
-        }
+      })
+    }
     system.log.debug("Allocating buffers...")
     BackendChunkPool.init()
   }
