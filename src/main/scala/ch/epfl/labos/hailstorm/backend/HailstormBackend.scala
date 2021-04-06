@@ -179,6 +179,8 @@ object HailstormBackend {
             })
           }
         }
+      case Config.ModeConfig.Prod =>
+        system.actorOf(HailstormBackendActor.props(None), HailstormBackendActor.name)
     }
     system.log.debug("Allocating buffers...")
     BackendChunkPool.init()
