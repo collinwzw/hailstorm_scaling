@@ -25,7 +25,7 @@ class ConsistentHashingStandalone(){
   private val backendConfig = root.getConfig("backend")
   val oldrealNodeList: List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(8,25).split(":")(0)).distinct
   val realNodeList:List[String]=addNode(oldrealNodeList,localIpAddress)
-  var virtualpool:List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(10,25).split(":")(1))
+  var virtualpool:List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(10,28).split(":")(1).slice(0,4))
   var nodemap:util.TreeMap[Int,String] = buildNodeMap(realNodeList)
   var hashring:util.TreeMap[String,String] = buildHashRing()
   val nodenumber:Int = realNodeList.length //number of nodes
