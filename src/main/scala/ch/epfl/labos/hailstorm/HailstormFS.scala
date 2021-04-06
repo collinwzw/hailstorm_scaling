@@ -134,22 +134,7 @@ object HailstormFS {
         Thread.sleep(5000)
         HailstormFrontendFuse.start(cliArguments)
 
-      //    if (cLiArgument.nodeIP.isSupplied){
-      //       Config.HailstormConfig.BackendConfig.NodesConfig.nodes = readConfig(nodeIP) //aws read remote node config
-      //       consistentHashing.add(Config.HailstormConfig.BackendConfig.NodesConfig.nodes.localIpAddress)
-      //      val portlist = consistentHashing.mynode(Config.HailstormConfig.FrontendConfig.NodesConfig.nodes.localIpAddress)//[2551,2552,2553]
-      //      for (x <- portlist){
-      //        HailstormBackend.startNewNode(localIPAddress + ":" + x)
-      //      }
-      //      Thread.sleep(5000) // sleep 5 seconds to make sure the backend is started
-      //      HailstormFrontendFuse.start(cliArguments)
-      //    }
-      //    else{
-      //      HailstormBackend.start(cliArguments)
-      //      Thread.sleep(5000) // sleep 5 seconds to make sure the backend is started
-      //      HailstormFrontendFuse.start(cliArguments)
-      //    }
-      //start scale mode
+
     }
 
     hfs.rootDirectory.loadPersistedFiles()
