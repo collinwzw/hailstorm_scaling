@@ -73,9 +73,9 @@ class HailstormBackendActor(subDirectory: Option[String]) extends Actor with Act
 object HailstormBackend {
   case class System(system: ActorSystem, port: Int)
   var systems: List[System] = Nil
-  def stop(port: Int): Unit = {
-    systems = systems.filter(system => if (system.port == port) {
-      system.system.log.debug("Terminating port:" + port.toString)
+  def stop(port: Array[String]): Unit = {
+    systems = systems.filter(system => if (port.contains(system.port)) {
+      system.system.log.debug("Terminating port:" + system.port)
       system.system.terminate()
       false
     } else {
@@ -157,25 +157,31 @@ object HailstormBackend {
         system.actorOf(HailstormBackendActor.props(Some(port + "")), HailstormBackendActor.name)
       case Config.ModeConfig.Scl =>
         system.actorOf(HailstormBackendActor.props(Some(port + "")), HailstormBackendActor.name)
+        var hostSet: Set[String] = Set()
         for (originalNode <- Config.HailstormConfig.BackendConfig.NodesConfig.originalNodes) {
-          system.actorSelection(s"akka.tcp://HailstormFrontend@${originalNode.hostname}:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
-            case Success(ref: ActorRef) => {
-              system.log.debug(f"Located HailstormFrontend actor: $ref")
-              val newIp = InetAddress.getLocalHost.getHostAddress
-              for (newPort <- Config.HailstormConfig.BackendConfig.NodesConfig.localPorts) {
-                ref ! s"remove,${newIp},${newPort}"
+          if (!hostSet(originalNode.hostname)) {
+            hostSet += originalNode.hostname
+            system.actorSelection(s"akka.tcp://HailstormFrontend@${originalNode.hostname}:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
+              case Success(ref: ActorRef) => {
+                system.log.debug(f"Located HailstormFrontend actor: $ref")
+                val newIp = InetAddress.getLocalHost.getHostAddress
+                var portString = ""
+                for (newPort <- Config.HailstormConfig.BackendConfig.NodesConfig.localPorts) {
+                  portString += ","
+                  portString += newPort
+                }
+                ref ! s"remove,${newIp}${portString}"
               }
-            }
-            case Failure(t) => {
-              system.log.debug(f"Failed to locate the actor. Reason: $t")
-              system.terminate()
-            }
-          })
+              case Failure(t) => {
+                system.log.debug(f"Failed to locate the actor. Reason: $t")
+                system.terminate()
+              }
+            })
+          }
         }
       case Config.ModeConfig.Prod =>
         system.actorOf(HailstormBackendActor.props(None), HailstormBackendActor.name)
     }
-
     system.log.debug("Allocating buffers...")
     BackendChunkPool.init()
   }
