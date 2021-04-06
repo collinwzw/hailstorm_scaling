@@ -92,14 +92,15 @@ class ConsistentHashingStandalone(){
 
   def backendNodelist():String ={
     val backendList: ArrayBuffer[String] = ArrayBuffer[String]()
-    for(nodes <- realNodeList){
-      val ports = getportlist(nodes)
+    val ports = getportlist(localIpAddress)
+    val node = nodemap.tailMap(getHash(localIpAddress)+1) match {
+      case tailMap if (tailMap.isEmpty) => nodemap.get(nodemap.firstKey)
+      case tailMap => nodemap.get(tailMap.firstKey)}
       for(p <- ports){
-        val nodeaddress = nodes + ":" + p
+        val nodeaddress = node + ":"+ p
         backendList.append(nodeaddress)
       }
 
-    }
     val result = backendList.toString()
     result.slice(12,result.length-1)
   }
