@@ -145,7 +145,6 @@ object Config extends ConfigUtils {
         var nodes = backendConfig.getList("nodes").unwrapped.toArray.toList.map(_.toString) map {
           case NodeAddressPattern(hostname, port) => NodeAddress(hostname, port.toInt)
         }
-
         val originalNodes: List[NodeAddress] = {
           if (originalConfig.hasPath("hailstorm")) {
             ConfigFactory.load(originalConfig).getConfig("hailstorm").getConfig("backend").getList("nodes").unwrapped.toArray.toList.map(_.toString) map {

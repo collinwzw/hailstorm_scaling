@@ -51,9 +51,9 @@ object HailstormFrontendFuse {
   var frontendHostname: String = null
   var frontendPort: Int = 0
 
-  def removeNode(hostname: String, port: Int): Unit = {
+  def replaceNode(hostname: String, port: Int): Unit = {
     Config.HailstormConfig.BackendConfig.NodesConfig.replaceAndReconnectBackend(system, hostname, port)
-    system.log.debug("Remove backend node:" + hostname + ":" + port.toString)
+    system.log.debug("Changing backend node:" + hostname + ":" + port.toString)
   }
 
   def startWithNewNode(hostname: String, port: Int): Unit = {
@@ -353,9 +353,10 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
       sender ! FileCreated
     case msg: String =>
 //      example:
-//        add,127.0.0.1,2556
-//        remove,127.0.0.1,2551
-      log.debug(msg.toString())
+//        add,127.0.0.1,2556 (one node is removed, then move its backend node 2556 to an existing node of ip 127.0.0.1)
+//        remove,127.0.0.1,2556 (one node is added, then move backend node 2556 to the new node of ip 127.0.0.1)
+//        reconnect,127.0.0.1,2556 (one node is removed, then tell all nodes to reconnect)
+      log.debug(msg)
       val msgArray = msg.split(",", 3)
       val hostname = msgArray(1)
       val port = msgArray(2).toInt
@@ -381,9 +382,12 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
         }
 
       }
-      else {
+      else if (msgArray(0) == "remove") {
         HailstormBackend.stop(port)
-        HailstormFrontendFuse.removeNode(hostname, port) //hostname is new added node's hostname
+        HailstormFrontendFuse.replaceNode(hostname, port) //hostname is new added node's hostname
+      }
+      else {
+        HailstormFrontendFuse.replaceNode(hostname, port)
       }
   }
 }
