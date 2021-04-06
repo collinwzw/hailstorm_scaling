@@ -128,7 +128,8 @@ object HailstormFS {
         val port_list_string: String = cliArguments.portlist()
         val port_list: Array[String] = port_list_string.split(',')
         for (x: String <- port_list) {
-          HailstormBackend.startNewNode(localIpAddress, x.toInt);
+          val newArgs = (args.toSeq ++ Seq("--me", x.takeRight(2))).toArray
+          HailstormBackend.start(new CliArguments(newArgs));
         }
         Thread.sleep(5000)
         HailstormFrontendFuse.start(cliArguments)

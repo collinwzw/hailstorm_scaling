@@ -9,9 +9,9 @@ import com.typesafe.config.ConfigFactory
 import java.util
 
 object RemoveNode {
-  val rn = new RemoveNode.()
+  val rn = new RemoveNode()
   def main(args: Array[String]): Unit = {
-    val portList = rn.getportlist(ch.localIpAddress)
+    val portList = rn.getmaplist(rn.localIpAddress)
     val address = rn.backendNodelist()
     print(address)
   }
@@ -24,8 +24,9 @@ class RemoveNode(){
   private val config = ConfigFactory.load()
   private val root = config.getConfig("hailstorm")
   private val backendConfig = root.getConfig("backend")
-  val oldrealNodeList: List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(8,25).split(":")(0)).distinct
-  val realNodeList:List[String]=remove(oldrealNodeList,localIpAddress)
+  val oldrealNodeList: List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(8,28).split(":")(0)).distinct
+  val Nodes:List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(8,25))
+  val realNodeList:List[String]=removeMe(oldrealNodeList,localIpAddress)
   var virtualpool:List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(10,25).split(":")(1))
   var nodemap:util.TreeMap[Int,String] = buildNodeMap(realNodeList)
   var hashring:util.TreeMap[String,String] = buildHashRing()
@@ -56,7 +57,7 @@ class RemoveNode(){
     }
     nodemap
   }
-  def remove(realNodeList:List[String],currentaddress:String):List[String] ={
+  def removeMe(realNodeList:List[String],currentaddress:String):List[String] ={
     val newlist = realNodeList.dropWhile(x=>{x == currentaddress})
     newlist
   }
@@ -81,7 +82,7 @@ class RemoveNode(){
     Math.abs(MurmurHash3.stringHash(server))
   }
 
-  def getportlist(realnode:String): ArrayBuffer[String] ={
+  def getmaplist(realnode:String): ArrayBuffer[String] ={
     val portlist = new ArrayBuffer[String]()
     for (port <- virtualpool) {
       if (hashring.get(port) == realnode) {
@@ -94,7 +95,7 @@ class RemoveNode(){
   def backendNodelist():String ={
     val backendList: ArrayBuffer[String] = ArrayBuffer[String]()
     for(nodes <- realNodeList){
-      val ports = getportlist(nodes)
+      val ports = getmaplist(nodes)
       for(p <- ports){
         val nodeaddress = nodes + ":" + p
         backendList.append(nodeaddress)
