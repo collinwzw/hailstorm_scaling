@@ -143,12 +143,7 @@ object HailstormFS {
               case Success(ref: ActorRef) => {
                 system.log.debug(f"Located HailstormFrontend actor: $ref")
                 val newIp = InetAddress.getLocalHost.getHostAddress
-                var portString = ""
-                for (newPort <- Config.HailstormConfig.BackendConfig.NodesConfig.localPorts) {
-                  portString += ","
-                  portString += newPort
-                }
-                ref ! s"remove,${newIp}${portString}"
+                ref ! s"remove,${newIp},${port_list_string}"
               }
               case Failure(t) => {
                 system.log.debug(f"Failed to locate the actor. Reason: $t")
