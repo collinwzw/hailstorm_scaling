@@ -77,10 +77,30 @@ object HailstormBackend {
     systems = systems.filter(system => if (port.contains(system.port.toString)) {
       system.system.log.debug("Terminating port:" + system.port)
       system.system.terminate()
+      dirDel(File("data/"+system.port.toString))
       false
     } else {
       true
     })
+  }
+
+
+  def dirDel(path: File): Unit = {
+    if (!path.exists()) {
+      return
+    }
+    else if (!path.isDirectory) {
+      path.delete()
+      println(path + " deleted")
+      return
+    }
+
+    val files: Array[File] = path.list.toArray
+    for (file <- files) {
+      dirDel(file)
+    }
+    path.delete()
+    println(path + " deleted")
   }
 
   def startNewNode(hostname: String, port: Int): Unit = {
