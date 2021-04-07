@@ -153,7 +153,6 @@ object Config extends ConfigUtils {
           } else { Nil }
         }
 
-        val localPorts: List[String] = backendConfig.getList("ports").unwrapped.toArray.toList.map(_.toString)
         // nodes = SimpleConfigList(["127.0.0.1:2551","127.0.0.1:2552","127.0.0.1:2553"])
         var machines = nodes.size
         // machine = number of nodes
