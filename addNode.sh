@@ -23,28 +23,6 @@ cp -f $applicationConfPath $cached_applicationConfPath
 found=False
 count=0
 
-#ip_port_array=()
-##read copied application.conf, store all the IP and port to the ip_port_array
-#while IFS= read -r line
-#do
-#  if [ "$line" = "]" ]
-#  then
-#    found=False
-#  fi
-#  if [ $found = true ]
-#  then
-#    ip_port_array+="$line"
-#    #echo $line
-#    ((count++))
-#    fi
-#  if [ "$line" = "hailstorm.backend.nodes = [" ]
-#  then
-#    found=true
-#  fi
-#done < "$applicationConfPath"
-
-echo $count
-
 #extract local machine IP
 local_ip=`hostname -I`
 local_ip=$(echo $local_ip | tr -d ' ') # removing white space
@@ -60,16 +38,17 @@ IFS=', ' read -r -a ip_port_array <<< "$s"
 port_list=()
 comma=','
 #go through ip_port array and replace desired port
+mkdir $data_folder_path
 for ip_port in "${ip_port_array[@]}"; do
+
   IFS=':' read -r -a ip_port_tuple <<< "$ip_port"
   ip="${ip_port_tuple[0]}"
   port="${ip_port_tuple[1]}"
   port_list+=$port$comma
-
+  echo $port
   replace_string="$local_ip$semi$port"
   #echo $data_folder_path$port
   scp -i /home/ubuntu/Desktop/ECE1724Project.pem -r ubuntu@$ip:$data_folder_path$port $data_folder_path
-
   #echo $ip_port
   echo $replace_string
   sed -i -e 's/'"$ip_port"'/'"$replace_string"'/' $applicationConfPath
