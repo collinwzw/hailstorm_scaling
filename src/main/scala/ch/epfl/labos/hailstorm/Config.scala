@@ -173,7 +173,7 @@ object Config extends ConfigUtils {
         }
 
         def replaceAndReconnectBackend(implicit system: ActorSystem, hostname: String, port: Array[String]): Unit = {
-          nodes = nodes.map(nodeAddress => if (port.contains(nodeAddress.port)) { NodeAddress(hostname, nodeAddress.port) } else { nodeAddress })
+          nodes = nodes.map(nodeAddress => if (port.contains(nodeAddress.port.toString)) { NodeAddress(hostname, nodeAddress.port) } else { nodeAddress })
           machines = nodes.size
           import system.dispatcher
           backendRefs = Await.result(Future.sequence(nodes.map(na => system.actorSelection(s"$protocol://HailstormBackend@${na.hostname}:${na.port}/user/master").resolveOne(30 seconds))), 30 seconds)
