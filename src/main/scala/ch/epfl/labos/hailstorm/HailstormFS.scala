@@ -23,6 +23,8 @@
  */
 package ch.epfl.labos.hailstorm
 
+import akka.actor.ActorRef
+import scala.concurrent.ExecutionContext.Implicits.global
 import java.net._
 import java.nio.file.Paths
 import akka.pattern.ask
@@ -131,6 +133,32 @@ object HailstormFS {
           val newArgs = (args.toSeq ++ Seq("--me", x.takeRight(2))).toArray
           HailstormBackend.start(new CliArguments(newArgs));
         }
+
+        val system = HailstormBackend.systems.last.system
+        var hostSet: Set[String] = Set()
+        for (originalNode <- Config.HailstormConfig.BackendConfig.NodesConfig.originalNodes) {
+          if (!hostSet(originalNode.hostname)) {
+            hostSet += originalNode.hostname
+            system.actorSelection(s"akka.tcp://HailstormFrontend@${originalNode.hostname}:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
+              case Success(ref: ActorRef) => {
+                system.log.debug(f"Located HailstormFrontend actor: $ref")
+                val newIp = InetAddress.getLocalHost.getHostAddress
+                var portString = ""
+                for (newPort <- Config.HailstormConfig.BackendConfig.NodesConfig.localPorts) {
+                  portString += ","
+                  portString += newPort
+                }
+                ref ! s"remove,${newIp}${portString}"
+              }
+              case Failure(t) => {
+                system.log.debug(f"Failed to locate the actor. Reason: $t")
+                system.terminate()
+              }
+            })
+          }
+        }
+
+
         Thread.sleep(5000)
         HailstormFrontendFuse.start(cliArguments)
 

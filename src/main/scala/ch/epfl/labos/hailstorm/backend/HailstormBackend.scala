@@ -22,7 +22,7 @@
  * under the License.
  */
 package ch.epfl.labos.hailstorm.backend
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import akka.actor._
 import akka.pattern._
 import akka.util._
@@ -163,35 +163,7 @@ object HailstormBackend {
     system.log.debug("Allocating buffers...")
     BackendChunkPool.init()
 
-    if (cliArguments.me() == 3) {
 
-
-      Config.ModeConfig.mode match {
-        case Config.ModeConfig.Scl =>
-          var hostSet: Set[String] = Set()
-          for (originalNode <- Config.HailstormConfig.BackendConfig.NodesConfig.originalNodes) {
-            if (!hostSet(originalNode.hostname)) {
-              hostSet += originalNode.hostname
-              system.actorSelection(s"akka.tcp://HailstormFrontend@${originalNode.hostname}:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
-                case Success(ref: ActorRef) => {
-                  system.log.debug(f"Located HailstormFrontend actor: $ref")
-                  val newIp = InetAddress.getLocalHost.getHostAddress
-                  var portString = ""
-                  for (newPort <- Config.HailstormConfig.BackendConfig.NodesConfig.localPorts) {
-                    portString += ","
-                    portString += newPort
-                  }
-                  ref ! s"remove,${newIp}${portString}"
-                }
-                case Failure(t) => {
-                  system.log.debug(f"Failed to locate the actor. Reason: $t")
-                  system.terminate()
-                }
-              })
-            }
-          }
-      }
-    }
   }
 
 }
