@@ -142,8 +142,7 @@ object HailstormFS {
             system.actorSelection(s"akka.tcp://HailstormFrontend@${originalNode.hostname}:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
               case Success(ref: ActorRef) => {
                 system.log.debug(f"Located HailstormFrontend actor: $ref")
-                val newIp = InetAddress.getLocalHost.getHostAddress
-                ref ! s"remove,${newIp},${port_list_string}"
+                ref ! s"remove,${localIpAddress},${port_list_string}"
               }
               case Failure(t) => {
                 system.log.debug(f"Failed to locate the actor. Reason: $t")
