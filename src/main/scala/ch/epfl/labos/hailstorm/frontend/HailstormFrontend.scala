@@ -39,8 +39,10 @@ import scala.collection.mutable.{Map => MMap}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import scala.util.Success
+import scala.util.{Failure, Success}
 import java.sql.{Array => _, _}
+import scala.collection.Set
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object HailstormFrontendFuse {
 
@@ -50,6 +52,37 @@ object HailstormFrontendFuse {
 
   var frontendHostname: String = null
   var frontendPort: Int = 0
+
+  def notifyTermination(): Unit = {
+    var hostSet: Set[String] = Set()
+    var portList: String = ""
+    val successorIp = ConsistentHashing.ch.findSuccessor()
+    hostSet += successorIp
+    for (node <- Config.HailstormConfig.BackendConfig.NodesConfig.nodes) {
+      if (!hostSet(node.hostname)) {
+        hostSet += node.hostname
+      }
+      portList += ","
+      portList += node.port.toString
+    }
+    for (host <- hostSet) {
+      system.actorSelection(s"akka.tcp://HailstormFrontend@${host}:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
+        case Success(ref: ActorRef) => {
+          system.log.debug(f"Located HailstormFrontend actor: $ref")
+          if (successorIp == host) {
+            ref ! s"add,${successorIp},${portList}"
+          }
+          else {
+            ref ! s"reconnect,${successorIp},${portList}"
+          }
+        }
+        case Failure(t) => {
+          system.log.debug(f"Failed to locate the actor. Reason: $t")
+          system.terminate()
+        }
+      })
+    }
+  }
 
   def replaceNode(hostname: String, port: Array[String]): Unit = {
     Config.HailstormConfig.BackendConfig.NodesConfig.replaceAndReconnectBackend(system, hostname, port)
@@ -351,6 +384,7 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
 //        add,127.0.0.1,2556,2557,2558 (one node is removed, then move its backend nodes 2556,2557,2558 to an existing node of ip 127.0.0.1)
 //        remove,127.0.0.1,2556,2557,2558 (one node is added, then move backend nodes 2556,2557,2558 to the new node of ip 127.0.0.1)
 //        reconnect,127.0.0.1,2556,2557,2558 (one node is removed or added, then tell all unaffected nodes to reconnect)
+//        terminate
       log.debug(msg)
       val msgArray = msg.split(",", 3)
       val hostname = msgArray(1)
@@ -381,10 +415,13 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
       }
       else if (msgArray(0) == "remove") {
         HailstormBackend.stop(portArray)
-        HailstormFrontendFuse.replaceNode(hostname, portArray) //hostname is newly added node's hostname
+        HailstormFrontendFuse.replaceNode(hostname, portArray)
+      }
+      else if (msgArray(0) == "reconnect") {
+        HailstormFrontendFuse.replaceNode(hostname, portArray)
       }
       else {
-        HailstormFrontendFuse.replaceNode(hostname, portArray)
+        HailstormFrontendFuse.notifyTermination()
       }
   }
 }

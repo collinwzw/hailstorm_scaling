@@ -1,4 +1,4 @@
-import ConsistentHashingStandalone.main
+package ch.epfl.labos.hailstorm.util
 
 import java.util.TreeMap
 import java.net.InetAddress
