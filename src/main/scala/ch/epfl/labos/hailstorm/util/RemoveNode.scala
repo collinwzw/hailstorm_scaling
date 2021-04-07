@@ -12,7 +12,7 @@ object RemoveNode {
   val rn = new RemoveNode()
   def main(args: Array[String]): Unit = {
     val portList = rn.getmaplist(rn.localIpAddress)
-    val address = rn.backendNodelist()
+    val address = rn.getAddress(rn.myport,rn.hashring)
     print(address)
   }
 
@@ -27,15 +27,15 @@ class RemoveNode(){
   val oldrealNodeList: List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(8,28).split(":")(0)).distinct
   val Nodes:List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(8,25))
   val realNodeList:List[String]=removeMe(oldrealNodeList,localIpAddress)
-  var virtualpool:List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(10,25).split(":")(1))
+  var virtualpool:List[String] = backendConfig.getList("nodes").toArray().toList.map(_.toString.slice(10,28).split(":")(1).slice(0,4))
   var nodemap:util.TreeMap[Int,String] = buildNodeMap(realNodeList)
-  var hashring:util.TreeMap[String,String] = buildHashRing()
+  var oldnodemap:util.TreeMap[Int,String] = buildNodeMap(oldrealNodeList)
+  var hashring:util.TreeMap[String,String] = buildHashRing(nodemap)
+  var oldhashring:util.TreeMap[String,String] = buildHashRing(oldnodemap)
+  val myport:ArrayBuffer[String] = getmaplist(localIpAddress,oldhashring)
   val nodenumber:Int = realNodeList.length //number of nodes
   val virtualsize:Int = backendConfig.getList("nodes").toArray().toList.size// need user to input
-  //  val backendList: ArrayBuffer[String] = ()
-  //  var virtualpool = ArrayBuffer[String]()
-  //  val nodemap =  new util.TreeMap[Int, String]()
-  //  val hashring = new util.TreeMap[String,String]()
+
 
   //Initialize the port pool
   def buildPortPool(virturalNodeSize:Int):ArrayBuffer[String]={
@@ -63,7 +63,7 @@ class RemoveNode(){
   }
 
 
-  def buildHashRing(): TreeMap[String,String] ={
+  def buildHashRing(nodemap:util.TreeMap[Int,String]): util.TreeMap[String,String] ={
     val hashring = new util.TreeMap[String,String]()
     for (port <- virtualpool) {
       val porthash = getHash(port)
@@ -82,28 +82,26 @@ class RemoveNode(){
     Math.abs(MurmurHash3.stringHash(server))
   }
 
-  def getmaplist(realnode:String): ArrayBuffer[String] ={
+  def getmaplist(myIP:String,hashring:util.TreeMap[String,String]): ArrayBuffer[String] ={
     val portlist = new ArrayBuffer[String]()
     for (port <- virtualpool) {
-      if (hashring.get(port) == realnode) {
+      if (hashring.get(port) == myIP) {
         portlist.append(port)
       }
     }
     portlist
   }
 
-  def backendNodelist():String ={
-    val backendList: ArrayBuffer[String] = ArrayBuffer[String]()
-    for(nodes <- realNodeList){
-      val ports = getmaplist(nodes)
-      for(p <- ports){
-        val nodeaddress = nodes + ":" + p
-        backendList.append(nodeaddress)
-      }
-
+  def getAddress(myport:ArrayBuffer[String],hashring:util.TreeMap[String,String]): String = {
+    val addresslist = new ArrayBuffer[String]()
+    for(port <- myport){
+      val address = hashring.get(port) + ":" + port
+      addresslist.append(address)
     }
-    val result = backendList.toString()
+    val result = addresslist.toString()
     result.slice(12,result.length-1)
   }
+
+
 }
 
