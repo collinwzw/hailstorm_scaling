@@ -50,18 +50,17 @@ class RemoveNode(){
 
   //
   def buildNodeMap(realnodelist:List[String]):util.TreeMap[Int,String]= {
-    nodemap = new util.TreeMap[Int, String]()
+    val mymap = new util.TreeMap[Int, String]()
     for (nodes <- realnodelist) {
       val hash = getHash(nodes)
-      nodemap.put(hash, nodes)
+      mymap.put(hash, nodes)
     }
-    nodemap
+    mymap
   }
-  def removeMe(realNodeList:List[String],currentaddress:String):List[String] ={
-    val newlist = realNodeList.dropWhile(x=>{x == currentaddress})
+  def removeMe(realNodeList:List[String],myaddress:String):List[String] ={
+    val newlist = realNodeList.filterNot(x=> {x == myaddress})
     newlist
   }
-
 
   def buildHashRing(nodemap:util.TreeMap[Int,String]): util.TreeMap[String,String] ={
     val hashring = new util.TreeMap[String,String]()
