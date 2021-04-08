@@ -39,7 +39,7 @@ import scala.collection.mutable.{Map => MMap}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.Success
 import java.sql.{Array => _, _}
 import scala.collection.Set
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -76,7 +76,7 @@ object HailstormFrontendFuse {
             ref ! s"reconnect,${successorIp},${portList}"
           }
         }
-        case Failure(t) => {
+        case scala.util.Failure(t) => {
           system.log.debug(f"Failed to locate the actor. Reason: $t")
           system.terminate()
         }

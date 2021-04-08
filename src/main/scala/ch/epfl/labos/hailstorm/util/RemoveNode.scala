@@ -11,7 +11,7 @@ import java.util
 object RemoveNode {
   val rn = new RemoveNode()
   def main(args: Array[String]): Unit = {
-    val portList = rn.getmaplist(rn.localIpAddress)
+    //val portList = rn.getmaplist(rn.localIpAddress)
     val address = rn.getAddress(rn.myport,rn.hashring)
     print(address)
   }
