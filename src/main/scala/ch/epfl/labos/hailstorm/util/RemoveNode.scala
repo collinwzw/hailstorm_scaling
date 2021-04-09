@@ -78,7 +78,7 @@ class RemoveNode(){
   //Hash function
   def getHash(server: String): Int = {
     import scala.util.hashing.MurmurHash3
-    Math.abs(MurmurHash3.stringHash(server))
+    Math.abs(MurmurHash3.stringHash(server + MurmurHash3.stringHash(server)))
   }
 
   def getmaplist(myIP:String,hashring:util.TreeMap[String,String]): ArrayBuffer[String] ={
