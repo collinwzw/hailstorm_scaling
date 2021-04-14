@@ -103,7 +103,7 @@ object HailstormFS {
     Config.ModeConfig.mode match {
       case Config.ModeConfig.Dev =>
         // Testing: starting 3 backend nodes and 1 frontend node
-        for (i <- 0 until 4) {
+        for (i <- 0 until 8) {
           //arg(0) contains the "-m"
           //arg(1) contains the mounting point directory
           //arg(2) contains the "-v"
