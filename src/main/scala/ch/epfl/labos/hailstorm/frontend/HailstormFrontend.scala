@@ -64,7 +64,7 @@ object HailstormFrontendFuse {
       if (!hostSet(node.hostname)) {
         hostSet += node.hostname
       }
-      if (node.hostname != localIp) {
+      if (node.hostname == localIp) {
         portList += ","
         portList += node.port.toString
       }
