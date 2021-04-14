@@ -73,7 +73,7 @@ object HailstormFrontendFuse {
             ref ! s"add,${successorIp}${portList}"
           }
           else {
-            ref ! s"reconnect,${successorIp},${portList}"
+            ref ! s"reconnect,${successorIp}${portList}"
           }
         }
         case scala.util.Failure(t) => {
