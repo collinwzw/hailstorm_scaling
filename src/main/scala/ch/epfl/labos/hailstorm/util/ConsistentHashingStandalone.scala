@@ -77,7 +77,7 @@ class ConsistentHashingStandalone(){
     //Hash function
     def getHash(server: String): Int = {
         import scala.util.hashing.MurmurHash3
-        Math.abs(MurmurHash3.stringHash(server))
+      Math.abs(MurmurHash3.stringHash(server + MurmurHash3.stringHash(server)))
       }
 
     def getportlist(realnode:String): ArrayBuffer[String] ={

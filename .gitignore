@@ -7,3 +7,5 @@ target
 project/target
 project/project/target
 *.sqlite
+scr/main/resources
+
