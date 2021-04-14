@@ -61,5 +61,7 @@ sed -i -e 's/'"$ip$s"'/'"$local_ip$s"'/' $applicationConfPath
 sed -i -e 's/dev/scl/g' $applicationConfPath
 
 echo $port_list
+scp -i /home/ubuntu/Desktop/ECE1724Project.pem $applicationConfPath ubuntu@$ip:$applicationConfPath
+
 sbt "run -m /home/ubuntu/HS/ -v -a $port_list"
 
