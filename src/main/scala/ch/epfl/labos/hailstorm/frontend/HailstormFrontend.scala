@@ -388,11 +388,12 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
       log.debug(msg)
       if (msg == "terminate") {
         HailstormFrontendFuse.notifyTermination()
-        return
       }
+      else {
       val msgArray = msg.split(",", 3)
       val hostname = msgArray(1)
       val portArray = msgArray(2).split(",")
+
       if (msgArray(0) == "add") {
         for (port <- portArray) {
           HailstormBackend.startNewNode(hostname, port.toInt)
@@ -400,7 +401,7 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
         HailstormFrontendFuse.startWithNewNode()
         val path = ""
         val ls = ft.paths.filter(_.startsWith(path)).map(_.substring(path.length)).filterNot(_.startsWith(".")).map(_.takeWhile(_ != '/'))
-        var hfs = HailstormFS.hfs
+        val hfs = HailstormFS.hfs
         for (file <- ls){
           val metadata = ft metadata file
           log.debug(file)
@@ -423,6 +424,7 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
       }
       else if (msgArray(0) == "reconnect") {
         HailstormFrontendFuse.replaceNode(hostname, portArray)
+      }
       }
   }
 }
