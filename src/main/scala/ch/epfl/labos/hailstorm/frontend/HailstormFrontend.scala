@@ -386,6 +386,10 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
 //        reconnect,127.0.0.1,2556,2557,2558 (one node is removed or added, then tell all unaffected nodes to reconnect)
 //        terminate
       log.debug(msg)
+      if (msg == "terminate") {
+        HailstormFrontendFuse.notifyTermination()
+        return
+      }
       val msgArray = msg.split(",", 3)
       val hostname = msgArray(1)
       val portArray = msgArray(2).split(",")
@@ -419,9 +423,6 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
       }
       else if (msgArray(0) == "reconnect") {
         HailstormFrontendFuse.replaceNode(hostname, portArray)
-      }
-      else {
-        HailstormFrontendFuse.notifyTermination()
       }
   }
 }
