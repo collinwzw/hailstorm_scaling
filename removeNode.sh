@@ -33,7 +33,7 @@ for ip_port in "${ip_port_array[@]}"; do
   ip="${ip_port_tuple[0]}"
   port="${ip_port_tuple[1]}"
   port_list+=$port$comma
-  replace_string="$local_ip$semi$port"
+  replace_string="$ip$semi$port"
 
   echo $replace_string
 done
