@@ -35,6 +35,7 @@ import com.typesafe.config._
 import jnr.ffi.Pointer
 import jnr.ffi.types.{off_t, size_t}
 
+import java.net.InetAddress
 import scala.collection.mutable.{Map => MMap}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -54,6 +55,7 @@ object HailstormFrontendFuse {
   var frontendPort: Int = 0
 
   def notifyTermination(): Unit = {
+    val localIp = InetAddress.getLocalHost.getHostAddress
     var hostSet: Set[String] = Set()
     var portList: String = ""
     val successorIp = ConsistentHashing.ch.findSuccessor()
@@ -62,8 +64,10 @@ object HailstormFrontendFuse {
       if (!hostSet(node.hostname)) {
         hostSet += node.hostname
       }
-      portList += ","
-      portList += node.port.toString
+      if (node.hostname != localIp) {
+        portList += ","
+        portList += node.port.toString
+      }
     }
     for (host <- hostSet) {
       system.actorSelection(s"akka.tcp://HailstormFrontend@${host}:3553/user/roxxfs").resolveOne()(10.seconds).onComplete(x => x match {
@@ -72,7 +76,7 @@ object HailstormFrontendFuse {
           if (successorIp == host) {
             ref ! s"add,${successorIp}${portList}"
           }
-          else {
+          else if (host != localIp) {
             ref ! s"reconnect,${successorIp}${portList}"
           }
         }
