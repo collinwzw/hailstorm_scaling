@@ -70,7 +70,7 @@ object HailstormFrontendFuse {
         case Success(ref: ActorRef) => {
           system.log.debug(f"Located HailstormFrontend actor: $ref")
           if (successorIp == host) {
-            ref ! s"add,${successorIp},${portList}"
+            ref ! s"add,${successorIp}${portList}"
           }
           else {
             ref ! s"reconnect,${successorIp},${portList}"
