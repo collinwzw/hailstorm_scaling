@@ -54,6 +54,9 @@ for ip_port in "${ip_port_array[@]}"; do
   sed -i -e 's/'"$ip_port"'/'"$replace_string"'/' $applicationConfPath
 done
 
+#copy back the updated application conf
+scp -i /home/ubuntu/Desktop/ECE1724Project.pem $applicationConfPath ubuntu@$ip:$applicationConfPath
+
 #change the frontend ip in application conf
 s=":3553"
 sed -i -e 's/'"$ip$s"'/'"$local_ip$s"'/' $applicationConfPath
@@ -61,7 +64,6 @@ sed -i -e 's/'"$ip$s"'/'"$local_ip$s"'/' $applicationConfPath
 sed -i -e 's/dev/scl/g' $applicationConfPath
 
 echo $port_list
-scp -i /home/ubuntu/Desktop/ECE1724Project.pem $applicationConfPath ubuntu@$ip:$applicationConfPath
 
 sbt "run -m /home/ubuntu/HS/ -v -a $port_list"
 
