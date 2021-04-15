@@ -1,10 +1,20 @@
 #!/bin/bash
 
+while getopts i: flag
+do
+    case "${flag}" in
+        i) appip=${OPTARG};;
+    esac
+done
+
+echo "IP: $appip";
+# copy the application.conf file from the IP
 
 applicationConfPath="/home/ubuntu/Desktop/hailstorm/src/main/resources/application.conf"
 original_applicationConfPath="/home/ubuntu/Desktop/hailstorm/src/main/resources/original_application.conf"
 cached_applicationConfPath="/home/ubuntu/Desktop/hailstorm/target/scala-2.12/classes/application.conf"
 data_folder_path="/home/ubuntu/Desktop/hailstorm/data/"
+scp -i /home/ubuntu/Desktop/ECE1724Project.pem ubuntu@$appip:$applicationConfPath $applicationConfPath
 
 # copy the application.conf file from the IP
 #scp -i /home/ubuntu/Desktop/ECE1724Project.pem ubuntu@$ip:$applicationConfPath $original_applicationConfPath
@@ -26,6 +36,7 @@ echo $s
 IFS=', ' read -r -a ip_port_array <<< "$s"
 port_list=()
 comma=','
+semi=":"
 #go through ip_port array and replace desired port
 for ip_port in "${ip_port_array[@]}"; do
 
@@ -34,8 +45,12 @@ for ip_port in "${ip_port_array[@]}"; do
   port="${ip_port_tuple[1]}"
   port_list+=$port$comma
   replace_string="$ip$semi$port"
+  sed -i -e 's/'"$local_ip$semi$port"'/'"$replace_string"'/' $applicationConfPath
+  scp -i /home/ubuntu/Desktop/ECE1724Project.pem -r $data_folder_path$port ubuntu@$ip:$data_folder_path
 
   echo $replace_string
 done
+scp -i /home/ubuntu/Desktop/ECE1724Project.pem $applicationConfPath ubuntu@$appip:$applicationConfPath
+
 cd ../akka_remote_to_hailstorm/
 sbt run
