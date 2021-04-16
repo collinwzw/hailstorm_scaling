@@ -54,10 +54,17 @@ object HailstormFrontendFuse {
   var frontendHostname: String = null
   var frontendPort: Int = 0
 
-  def notifyTermination(): Unit = {
+  def terminateHailstorm(portArray: Array[String]): Unit = {
+    HailstormBackend.stop(portArray)
+    system.terminate()
+    java.lang.System.exit(0)
+  }
+
+  def notifyTermination(): Array[String] = {
     val localIp = InetAddress.getLocalHost.getHostAddress
     var hostSet: Set[String] = Set()
     var portList: String = ""
+    var res = Array[String]()
     val successorIp = ConsistentHashing.ch.findSuccessor()
     hostSet += successorIp
     for (node <- Config.HailstormConfig.BackendConfig.NodesConfig.nodes) {
@@ -67,6 +74,7 @@ object HailstormFrontendFuse {
       if (node.hostname == localIp) {
         portList += ","
         portList += node.port.toString
+        res = res :+ node.port.toString
       }
     }
     for (host <- hostSet) {
@@ -86,6 +94,7 @@ object HailstormFrontendFuse {
         }
       })
     }
+    res
   }
 
   def replaceNode(hostname: String, port: Array[String]): Unit = {
@@ -391,7 +400,8 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
 //        terminate
       log.debug(msg)
       if (msg == "terminate") {
-        HailstormFrontendFuse.notifyTermination()
+        val portToTerminate = HailstormFrontendFuse.notifyTermination()
+        HailstormFrontendFuse.terminateHailstorm(portToTerminate)
       }
       else {
       val msgArray = msg.split(",", 3)
