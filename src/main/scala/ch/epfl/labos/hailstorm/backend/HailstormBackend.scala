@@ -131,7 +131,6 @@ object HailstormBackend {
     }
     system.log.debug("New node:" + hostname + ":" + port.toString)
     system.log.debug("Allocating buffers...")
-    Config.HailstormConfig.BackendConfig.NodesConfig.addNewBackend(hostname, port)
     BackendChunkPool.init()
   }
 
