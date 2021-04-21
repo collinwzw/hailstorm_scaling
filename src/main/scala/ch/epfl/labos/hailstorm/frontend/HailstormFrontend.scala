@@ -102,12 +102,6 @@ object HailstormFrontendFuse {
     system.log.debug("Changing backend node:" + hostname + ":" + port.toString)
   }
 
-  def startWithNewNode(hostname: String, portArray: Array[String]): Unit = {
-    Config.HailstormConfig.BackendConfig.NodesConfig.replaceAndReconnectBackend(system, hostname, portArray)
-    system.log.debug(HailstormStorageManager.name)
-    system.log.debug("Connect new backend node")
-  }
-
   def start(cliArguments: CliArguments): Unit = {
     var config =
       if (cliArguments.me.isSupplied) {
@@ -412,7 +406,7 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
           for (port <- portArray) {
             HailstormBackend.startNewNode(hostname, port.toInt)
           }
-          HailstormFrontendFuse.startWithNewNode(hostname, portArray)
+          HailstormFrontendFuse.replaceNode(hostname, portArray)
           val path = ""
           val ls = ft.paths.filter(_.startsWith(path)).map(_.substring(path.length)).filterNot(_.startsWith(".")).map(_.takeWhile(_ != '/'))
 
