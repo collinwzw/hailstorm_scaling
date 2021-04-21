@@ -23,6 +23,9 @@
  */
 package ch.epfl.labos.hailstorm.util
 
+import akka.actor.ActorRef
+import ch.epfl.labos.hailstorm.Config
+
 import scala.collection.immutable.Seq
 import scala.util.Random
 
@@ -30,18 +33,26 @@ object Cyclic {
 
   def apply[A](seed: Int, nodes: Seq[A]): Cyclic[A] =
     new Cyclic[A](seed, nodes)
-
 }
 
 class Cyclic[A](seed: Int, nodes: Seq[A]) {
+  val refsOrder: List[Int] = {
+    val res = nodes.indices.toList
+    new Random(3 * seed).shuffle(new Random(seed).shuffle(res))
+  } // XXX: need to shuffle twice with this stupid RNG
 
-  val permutation = new Random(3 * seed).shuffle(new Random(seed).shuffle(nodes)) // XXX: need to shuffle twice with this stupid RNG
-  val size = permutation.size
+  var size = nodes.size
 
   private var i = 0
 
-  def next: A = {
-    val ret = permutation(i)
+  def permutation(): Seq[ActorRef] = {
+    val seq: Seq[ActorRef] = refsOrder.map(i => Config.HailstormConfig.BackendConfig.NodesConfig.backendRefs(i))
+    size = seq.size
+    seq
+  }
+
+  def next: ActorRef = {
+    val ret = permutation()(i)
     i = (i + 1) % size
     ret
   }

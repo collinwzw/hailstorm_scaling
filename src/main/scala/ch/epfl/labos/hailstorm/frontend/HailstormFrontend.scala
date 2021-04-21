@@ -785,7 +785,6 @@ class HailstormBagClient(bag: Bag, var path: String) extends Actor with ActorCou
 
   import HailstormBagClient._
   import ch.epfl.labos.hailstorm.common
-  import context.dispatcher
 
   val cyclic =
     Config.HailstormConfig.FrontendConfig.ioMode match {
@@ -879,7 +878,7 @@ class HailstormBagClient(bag: Bag, var path: String) extends Actor with ActorCou
       val ops = (Seq.fill(idxBump)(highSize) ++ Seq(bumpSize) ++ Seq.fill(cyclic.size - idxBump - 1)(lowSize)) map (s => common.Trunc(fingerprint, bag, s))
 
       val replyTo = sender
-      runGlobalOp("trunc", ops, cyclic.permutation, () => replyTo ! TruncAcked)
+      runGlobalOp("trunc", ops, cyclic.permutation(), () => replyTo ! TruncAcked)
 
     case Flush =>
       val (pendingWrites, pendingReads) = queue.partition(_._2._1.isInstanceOf[Write])
@@ -889,7 +888,7 @@ class HailstormBagClient(bag: Bag, var path: String) extends Actor with ActorCou
       }
 
       val replyTo = sender
-      runGlobalOp("flush", Seq.fill(cyclic.size)(common.Flush(fingerprint, bag)), cyclic.permutation, () => replyTo ! FlushAcked)
+      runGlobalOp("flush", Seq.fill(cyclic.size)(common.Flush(fingerprint, bag)), cyclic.permutation(), () => replyTo ! FlushAcked)
 
     case Delete =>
       if (queue.nonEmpty) {
@@ -898,7 +897,7 @@ class HailstormBagClient(bag: Bag, var path: String) extends Actor with ActorCou
       }
 
       val replyTo = sender
-      runGlobalOp("delete", Seq.fill(cyclic.size)(common.Delete(fingerprint, bag)), cyclic.permutation, () => replyTo ! Deleted)
+      runGlobalOp("delete", Seq.fill(cyclic.size)(common.Delete(fingerprint, bag)), cyclic.permutation(), () => replyTo ! Deleted)
 
     case HailstormBagClient.PathChanged(newPath) =>
       path = newPath
@@ -951,7 +950,7 @@ class HailstormBagClient(bag: Bag, var path: String) extends Actor with ActorCou
   }
 
   private def target(offset: Long): ActorRef =
-    cyclic.permutation((offset / Chunk.dataSize).toInt % cyclic.size)
+    cyclic.permutation()((offset / Chunk.dataSize).toInt % cyclic.size)
 
   private def targetOffset(offset: Long): Long =
     (offset / Chunk.dataSize) / cyclic.size * Chunk.dataSize
