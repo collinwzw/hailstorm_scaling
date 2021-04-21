@@ -31,11 +31,11 @@ import scala.util.Random
 
 object Cyclic {
 
-  def apply[A](seed: Int, nodes: Seq[A]): Cyclic[A] =
+  def apply[A](seed: Int, nodes: Seq[ActorRef]): Cyclic[A] =
     new Cyclic[A](seed, nodes)
 }
 
-class Cyclic[A](seed: Int, nodes: Seq[A]) {
+class Cyclic[A](seed: Int, nodes: Seq[ActorRef]) {
   val refsOrder: List[Int] = {
     val res = nodes.indices.toList
     new Random(3 * seed).shuffle(new Random(seed).shuffle(res))

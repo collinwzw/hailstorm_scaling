@@ -430,16 +430,13 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
 
             log.debug(hfs.toString())
           }
-          hfs.rootDirectory.loadPersistedFiles()
         }
         else if (msgArray(0) == "remove") {
           HailstormBackend.stop(portArray)
           HailstormFrontendFuse.replaceNode(hostname, portArray)
-          hfs.rootDirectory.loadPersistedFiles()
         }
         else if (msgArray(0) == "reconnect") {
           HailstormFrontendFuse.replaceNode(hostname, portArray)
-          hfs.rootDirectory.loadPersistedFiles()
         }
       }
   }
