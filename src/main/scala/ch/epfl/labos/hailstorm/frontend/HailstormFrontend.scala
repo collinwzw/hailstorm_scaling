@@ -103,7 +103,6 @@ object HailstormFrontendFuse {
   }
 
   def startWithNewNode(): Unit = {
-    //hostname and port are for new backend node
     Config.HailstormConfig.BackendConfig.NodesConfig.connectBackend(system)
     system.log.debug(HailstormStorageManager.name)
     system.log.debug("Connect new backend node")
@@ -404,41 +403,44 @@ class HailstormStorageManager(fileMappingDb: String, clearOnInit: Boolean) exten
         HailstormFrontendFuse.terminateHailstorm(portToTerminate)
       }
       else {
-      val msgArray = msg.split(",", 3)
-      val hostname = msgArray(1)
-      val portArray = msgArray(2).split(",")
-
-      if (msgArray(0) == "add") {
-        for (port <- portArray) {
-          HailstormBackend.startNewNode(hostname, port.toInt)
-        }
-        HailstormFrontendFuse.startWithNewNode()
-        val path = ""
-        val ls = ft.paths.filter(_.startsWith(path)).map(_.substring(path.length)).filterNot(_.startsWith(".")).map(_.takeWhile(_ != '/'))
         val hfs = HailstormFS.hfs
-        for (file <- ls){
-          val metadata = ft metadata file
-          log.debug(file)
-          log.debug(metadata)
-//          hfs.getPath(file) match {
-//            case Some(f) =>
-//              f.fileHandle.ref ! Delete
-//              log.debug(f.toString())
-//          }
+        val msgArray = msg.split(",", 3)
+        val hostname = msgArray(1)
+        val portArray = msgArray(2).split(",")
 
-          //ft.create( file.toString(), uuid)
+        if (msgArray(0) == "add") {
+          for (port <- portArray) {
+            HailstormBackend.startNewNode(hostname, port.toInt)
+          }
+          HailstormFrontendFuse.startWithNewNode()
+          val path = ""
+          val ls = ft.paths.filter(_.startsWith(path)).map(_.substring(path.length)).filterNot(_.startsWith(".")).map(_.takeWhile(_ != '/'))
 
-          log.debug(hfs.toString())
+          for (file <- ls) {
+            val metadata = ft metadata file
+            log.debug(file)
+            log.debug(metadata)
+  //          hfs.getPath(file) match {
+  //            case Some(f) =>
+  //              f.fileHandle.ref ! Delete
+  //              log.debug(f.toString())
+  //          }
+
+            //ft.create( file.toString(), uuid)
+
+            log.debug(hfs.toString())
+          }
+          hfs.rootDirectory.loadPersistedFiles()
         }
-
-      }
-      else if (msgArray(0) == "remove") {
-        HailstormBackend.stop(portArray)
-        HailstormFrontendFuse.replaceNode(hostname, portArray)
-      }
-      else if (msgArray(0) == "reconnect") {
-        HailstormFrontendFuse.replaceNode(hostname, portArray)
-      }
+        else if (msgArray(0) == "remove") {
+          HailstormBackend.stop(portArray)
+          HailstormFrontendFuse.replaceNode(hostname, portArray)
+          hfs.rootDirectory.loadPersistedFiles()
+        }
+        else if (msgArray(0) == "reconnect") {
+          HailstormFrontendFuse.replaceNode(hostname, portArray)
+          hfs.rootDirectory.loadPersistedFiles()
+        }
       }
   }
 }
